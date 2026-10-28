@@ -1,0 +1,6 @@
+{
+  "name": "Пирамиды Роста",
+  "description": "Интерактивное нативное оффлайн-приложение «Пирамиды Роста» на Kotlin и Jetpack Compose с изометрическим полем, весовой прогрессией этажей и локальной базой данных Room",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

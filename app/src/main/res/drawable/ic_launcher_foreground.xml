@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Stepped Isometric Growth Pyramid Silhouette -->
+    <path
+        android:fillColor="#FF1A5296"
+        android:pathData="M24,74 L84,74 L78,62 L30,62 Z" />
+    <path
+        android:fillColor="#FF2575D6"
+        android:pathData="M31,60 L77,60 L71,48 L37,48 Z" />
+    <path
+        android:fillColor="#FF3BA0FF"
+        android:pathData="M38,46 L70,46 L64,34 L44,34 Z" />
+    <path
+        android:fillColor="#FF6ED3FF"
+        android:pathData="M45,32 L63,32 L54,18 Z" />
+</vector>

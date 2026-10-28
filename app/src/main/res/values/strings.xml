@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Пирамиды Роста</string>
+    <string name="camera_label">Камера</string>
+    <string name="move_pyramid_label">Переместить</string>
+    <string name="settings_label">Настройки</string>
+    <string name="create_pyramid_btn">+ Создать пирамиду</string>
+    <string name="back_to_board">&lt; Назад к доске</string>
+    <string name="pyramid_prefix">Пирамида: %1$s</string>
+    <string name="total_weight_format">Общий вес: %1$d</string>
+    <string name="weight_bracket_format">[Вес: %1$d]</string>
+    <string name="add_floor_above">+ Добавить этаж выше</string>
+    <string name="add_topic_btn">+ Добавить тему</string>
+    <string name="apex_title">Вершина</string>
+    <string name="apex_waiting">[Ожидает]</string>
+    <string name="status_completed">Завершено</string>
+    <string name="status_in_progress">В процессе</string>
+    <string name="status_locked">Заблокирован</string>
+    <string name="locked_floor_warning">Нельзя выполнять задачи верхних этажей, пока не завершены все задачи предыдущих этажей!</string>
+    <string name="why_plan_ahead_btn">Почему важно планировать наперёд и задавать 2+ этажа?</string>
+    <string name="cd_zoom_in">Приблизить камеру</string>
+    <string name="cd_zoom_out">Отдалить камеру</string>
+    <string name="cd_reset_camera">Сбросить камеру</string>
+    <string name="cd_move_pyramids">Режим перемещения пирамид</string>
+    <string name="cd_settings_menu">Открыть настройки поля и темы</string>
+</resources>
