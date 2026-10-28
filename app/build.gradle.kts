@@ -1,5 +1,6 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
 import java.time.Duration
+import java.util.Base64
 
 plugins {
   alias(libs.plugins.android.application)
@@ -7,6 +8,13 @@ plugins {
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+}
+
+val debugKeystoreFile = file("${rootDir}/debug.keystore")
+val debugKeystoreBase64File = file("${rootDir}/debug.keystore.base64")
+if (!debugKeystoreFile.exists() && debugKeystoreBase64File.exists()) {
+  val cleanBase64 = debugKeystoreBase64File.readText().replace("\\s".toRegex(), "")
+  debugKeystoreFile.writeBytes(Base64.getDecoder().decode(cleanBase64))
 }
 
 android {
