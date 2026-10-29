@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Пирамиды Роста"
+rootProject.name = "Pyraminds"
 
 include(":app")

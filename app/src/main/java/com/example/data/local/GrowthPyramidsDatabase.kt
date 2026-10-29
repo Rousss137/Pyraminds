@@ -56,8 +56,23 @@ interface PyramidDao {
     @Query("SELECT COUNT(*) FROM pyramids")
     suspend fun countPyramids(): Int
 
+    @Query("SELECT * FROM field_boards ORDER BY orderIndex ASC")
+    suspend fun getAllBoards(): List<FieldBoard>
+
+    @Query("SELECT * FROM pyramids ORDER BY totalWeight DESC")
+    suspend fun getAllPyramids(): List<Pyramid>
+
+    @Query("SELECT * FROM floors ORDER BY levelNumber ASC")
+    suspend fun getAllFloors(): List<Floor>
+
+    @Query("SELECT * FROM topics ORDER BY orderIndex ASC")
+    suspend fun getAllTopics(): List<Topic>
+
     @Query("SELECT * FROM pyramids WHERE id = :pyramidId LIMIT 1")
     suspend fun getPyramidById(pyramidId: String): Pyramid?
+
+    @Query("SELECT * FROM floors WHERE id = :floorId LIMIT 1")
+    suspend fun getFloorById(floorId: String): Floor?
 
     @Query("SELECT * FROM floors WHERE pyramidId = :pyramidId ORDER BY levelNumber ASC")
     suspend fun getFloorsForPyramid(pyramidId: String): List<Floor>
@@ -88,6 +103,9 @@ interface PyramidDao {
 
     @Update
     suspend fun updatePyramid(pyramid: Pyramid)
+
+    @Update
+    suspend fun updateFloor(floor: Floor)
 
     @Update
     suspend fun updateFloors(floors: List<Floor>)

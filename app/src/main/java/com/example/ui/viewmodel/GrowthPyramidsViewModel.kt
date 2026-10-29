@@ -165,6 +165,67 @@ class GrowthPyramidsViewModel(
         }
     }
 
+    fun updatePyramidTitle(pyramidId: String, newTitle: String) {
+        viewModelScope.launch {
+            val res = repository.updatePyramidTitle(pyramidId, newTitle)
+            res.onSuccess {
+                _actionMessage.value = "Название пирамиды обновлено"
+            }.onFailure { err ->
+                _actionMessage.value = err.localizedMessage ?: "Не удалось переименовать пирамиду"
+            }
+        }
+    }
+
+    fun updateFloorTitle(floorId: String, newTitle: String) {
+        viewModelScope.launch {
+            val res = repository.updateFloorTitle(floorId, newTitle)
+            res.onSuccess {
+                _actionMessage.value = "Название этажа обновлено"
+            }.onFailure { err ->
+                _actionMessage.value = err.localizedMessage ?: "Не удалось переименовать этаж"
+            }
+        }
+    }
+
+    fun updateTopic(
+        pyramidId: String,
+        topicId: String,
+        newTitle: String,
+        newWeight: Long
+    ) {
+        viewModelScope.launch {
+            val res = repository.updateTopic(pyramidId, topicId, newTitle, newWeight)
+            res.onSuccess {
+                _actionMessage.value = "Цель / задача обновлена"
+            }.onFailure { err ->
+                _actionMessage.value = err.localizedMessage ?: "Не удалось обновить задачу"
+            }
+        }
+    }
+
+    fun exportBackupJson(onReady: (String) -> Unit) {
+        viewModelScope.launch {
+            val res = repository.exportBackupJson()
+            res.onSuccess { json ->
+                onReady(json)
+            }.onFailure { err ->
+                _actionMessage.value = err.localizedMessage ?: "Ошибка создания резервной копии"
+            }
+        }
+    }
+
+    fun importBackupJson(rawJson: String, replaceExisting: Boolean, onCompleted: () -> Unit = {}) {
+        viewModelScope.launch {
+            val res = repository.importBackupJson(rawJson, replaceExisting)
+            res.onSuccess { count ->
+                _actionMessage.value = "Резервная копия успешно загружена (пирамид: $count)"
+                onCompleted()
+            }.onFailure { err ->
+                _actionMessage.value = err.localizedMessage ?: "Ошибка загрузки резервной копии"
+            }
+        }
+    }
+
     fun showMessage(message: String) {
         _actionMessage.value = message
     }

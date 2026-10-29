@@ -34,9 +34,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -77,6 +79,9 @@ fun PyramidDetailScreen(
     onBackToBoard: () -> Unit,
     onAddFloorAbove: () -> Unit,
     onUpdatePyramidColor: (String) -> Unit,
+    onEditPyramidTitle: () -> Unit,
+    onEditFloorTitle: (floorId: String, levelNumber: Long, currentTitle: String) -> Unit,
+    onEditTopic: (Topic) -> Unit,
     onOpenAddTopicModal: (floorId: String, levelNumber: Long, floorTitle: String) -> Unit,
     onToggleTopic: (topicId: String) -> Unit,
     onLockedFloorTap: () -> Unit,
@@ -88,7 +93,7 @@ fun PyramidDetailScreen(
 
     val pyramid = detail.pyramid
     val baseColor = parseHexColor(pyramid.baseColor)
-    var showColorPicker by remember { mutableStateOf(true) }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     // Display floors from top (highest levelNumber) down to bottom (Floor 1)
     val floorsBottomUp = detail.floorsWithTopics.sortedBy { it.floor.levelNumber }
@@ -201,14 +206,41 @@ fun PyramidDetailScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2. Pyramid Title & Total Weight + "+ Добавить этаж выше"
+                // 2. Pyramid Title (with Edit button) & Total Weight + "+ Добавить этаж выше"
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.pyramid_prefix, pyramid.title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.pyramid_prefix, pyramid.title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.ExtraBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF252C3B),
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(10.dp))
+                                .clickable { onEditPyramidTitle() }
+                                .testTag("edit_pyramid_title_button")
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Редактировать название пирамиды",
+                                    tint = Color(0xFF93C5FD),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -358,6 +390,14 @@ fun PyramidDetailScreen(
                             onLockedFloorTap()
                         }
                     },
+                    onEditFloorTitle = {
+                        onEditFloorTitle(
+                            floorWithTopics.floor.id,
+                            floorWithTopics.floor.levelNumber,
+                            floorWithTopics.floor.title
+                        )
+                    },
+                    onEditTopic = onEditTopic,
                     onAddTopic = {
                         onOpenAddTopicModal(
                             floorWithTopics.floor.id,
@@ -472,6 +512,8 @@ private fun TriangularFloorSliceItem(
     bottomWidthFraction: Float,
     isUnlocked: Boolean,
     onToggleTopic: (String) -> Unit,
+    onEditFloorTitle: () -> Unit,
+    onEditTopic: (Topic) -> Unit,
     onAddTopic: () -> Unit
 ) {
     val floor = floorWithTopics.floor
@@ -508,12 +550,10 @@ private fun TriangularFloorSliceItem(
         else -> 10.dp
     }
 
-    val topicRowSpacing = when {
-        isInProgress -> 7.dp
-        else -> 4.dp
-    }
+    // Equal vertical distance between all tasks on the same floor
+    val topicRowSpacing = 8.dp
 
-    val avgSliceFraction = ((topWidthFraction + bottomWidthFraction) * 0.5f).coerceIn(0.38f, 0.94f)
+    val avgSliceFraction = ((topWidthFraction + bottomWidthFraction) * 0.5f).coerceIn(0.42f, 0.94f)
 
     Box(
         modifier = Modifier
@@ -594,19 +634,43 @@ private fun TriangularFloorSliceItem(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = floor.title,
-                    color = if (isLocked) Color(0xFFCBD5E1) else Color.White,
-                    fontSize = if (isInProgress) 15.sp else 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 17.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = floor.title,
+                        color = if (isLocked) Color(0xFFCBD5E1) else Color.White,
+                        fontSize = if (isInProgress) 15.sp else 13.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 17.sp,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.25f))
+                            .clickable { onEditFloorTitle() }
+                            .testTag("edit_floor_title_${floor.levelNumber}"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Редактировать название этажа",
+                            tint = Color.White.copy(alpha = 0.85f),
+                            modifier = Modifier.size(13.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 FloorStatusBadge(status = effectiveStatus)
             }
 
-            Spacer(modifier = Modifier.height(if (isInProgress) 10.dp else 7.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(topicRowSpacing),
@@ -617,12 +681,13 @@ private fun TriangularFloorSliceItem(
                     TopicCheckboxRow(
                         topic = topic,
                         isFloorLocked = isLocked,
-                        onToggle = { onToggleTopic(topic.id) }
+                        onToggle = { onToggleTopic(topic.id) },
+                        onEdit = { onEditTopic(topic) }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(if (isInProgress) 10.dp else 7.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Surface(
                 shape = RoundedCornerShape(50),
@@ -690,76 +755,116 @@ private fun FloorStatusBadge(status: String) {
 private fun TopicCheckboxRow(
     topic: Topic,
     isFloorLocked: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    onEdit: () -> Unit
 ) {
-    Row(
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = Color(0x3D0B111E),
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .border(
+                width = 1.dp,
+                color = if (topic.isCompleted && !isFloorLocked) {
+                    Color.White.copy(alpha = 0.35f)
+                } else {
+                    Color.White.copy(alpha = 0.14f)
+                },
+                shape = RoundedCornerShape(10.dp)
+            )
             .clickable { onToggle() }
-            .padding(vertical = 3.dp, horizontal = 6.dp)
-            .testTag("topic_row_${topic.id}"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+            .testTag("topic_row_${topic.id}")
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .size(19.dp)
-                .clip(RoundedCornerShape(5.dp))
-                .background(
-                    when {
-                        isFloorLocked -> Color.White.copy(alpha = 0.08f)
-                        topic.isCompleted -> Color.White.copy(alpha = 0.24f)
-                        else -> Color.Transparent
-                    }
-                )
-                .border(
-                    width = 1.5.dp,
-                    color = when {
-                        isFloorLocked -> Color.White.copy(alpha = 0.35f)
-                        topic.isCompleted -> Color.White
-                        else -> Color.White.copy(alpha = 0.75f)
-                    },
-                    shape = RoundedCornerShape(5.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (isFloorLocked) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(
+                        when {
+                            isFloorLocked -> Color.White.copy(alpha = 0.08f)
+                            topic.isCompleted -> Color.White.copy(alpha = 0.24f)
+                            else -> Color.Transparent
+                        }
+                    )
+                    .border(
+                        width = 1.5.dp,
+                        color = when {
+                            isFloorLocked -> Color.White.copy(alpha = 0.35f)
+                            topic.isCompleted -> Color.White
+                            else -> Color.White.copy(alpha = 0.75f)
+                        },
+                        shape = RoundedCornerShape(5.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isFloorLocked) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Этаж заблокирован",
+                        tint = Color.White.copy(alpha = 0.55f),
+                        modifier = Modifier.size(11.dp)
+                    )
+                } else if (topic.isCompleted) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(13.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = topic.title,
+                color = if (isFloorLocked) {
+                    Color.White.copy(alpha = 0.65f)
+                } else {
+                    Color.White
+                },
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                lineHeight = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            Text(
+                text = stringResource(R.string.weight_bracket_format, topic.weight),
+                color = if (isFloorLocked) Color.White.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.92f),
+                fontFamily = JetBrainsMonoFontFamily,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.12f))
+                    .clickable { onEdit() }
+                    .testTag("edit_topic_${topic.id}"),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Этаж заблокирован",
-                    tint = Color.White.copy(alpha = 0.55f),
-                    modifier = Modifier.size(11.dp)
-                )
-            } else if (topic.isCompleted) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(13.dp)
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Редактировать задачу",
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(12.dp)
                 )
             }
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Text(
-            text = "${topic.title} ",
-            color = if (isFloorLocked) {
-                Color.White.copy(alpha = 0.62f)
-            } else {
-                Color.White
-            },
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 16.sp
-        )
-
-        Text(
-            text = stringResource(R.string.weight_bracket_format, topic.weight),
-            color = if (isFloorLocked) Color.White.copy(alpha = 0.55f) else Color.White.copy(alpha = 0.92f),
-            fontFamily = JetBrainsMonoFontFamily,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }

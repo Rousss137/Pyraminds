@@ -21,10 +21,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -115,9 +118,9 @@ fun CreatePyramidDialog(
         title = {
             Column {
                 Text(
-                    text = "Создать пирамиду роста",
+                    text = "Создать пирамиду личностного роста",
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 19.sp
+                    fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -471,7 +474,7 @@ fun GoalPlanningExplanationDialog(
                 ExplanationStepCard(
                     number = "4",
                     title = "Фундамент перед вершиной",
-                    body = "В «Пирамидах Роста» верхние этажи заблокированы, пока не закрыты нижние. Это защищает от распыления внимания и гарантирует, что каждый новый уровень опирается на 100% освоенную базу."
+                    body = "В «Пирамидах личностного роста» верхние этажи заблокированы, пока не закрыты нижние. Это защищает от распыления внимания и гарантирует, что каждый новый уровень опирается на 100% освоенную базу."
                 )
             }
         },
@@ -928,6 +931,465 @@ fun AddTopicDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Отмена", color = Color(0xFF94A3B8))
+            }
+        }
+    )
+}
+
+@Composable
+fun EditPyramidTitleDialog(
+    currentTitle: String,
+    onDismiss: () -> Unit,
+    onConfirm: (newTitle: String) -> Unit
+) {
+    var title by remember(currentTitle) { mutableStateOf(currentTitle) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A2232),
+        titleContentColor = Color.White,
+        textContentColor = Color(0xFFE2E8F0),
+        title = {
+            Text(
+                text = "Редактировать название пирамиды",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Название пирамиды (долгосрочная цель)") },
+                    singleLine = true,
+                    colors = dialogTextFieldColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_pyramid_title_input")
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank()) {
+                        onConfirm(title.trim())
+                    }
+                },
+                enabled = title.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2997FF)),
+                modifier = Modifier.testTag("confirm_edit_pyramid_title_button")
+            ) {
+                Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена", color = Color(0xFF94A3B8))
+            }
+        }
+    )
+}
+
+@Composable
+fun EditFloorTitleDialog(
+    levelNumber: Long,
+    currentTitle: String,
+    onDismiss: () -> Unit,
+    onConfirm: (newTitle: String) -> Unit
+) {
+    var title by remember(currentTitle) { mutableStateOf(currentTitle) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A2232),
+        titleContentColor = Color.White,
+        textContentColor = Color(0xFFE2E8F0),
+        title = {
+            Text(
+                text = "Редактировать название этажа $levelNumber",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Название этажа") },
+                    singleLine = true,
+                    colors = dialogTextFieldColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_floor_title_input")
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank()) {
+                        onConfirm(title.trim())
+                    }
+                },
+                enabled = title.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2997FF)),
+                modifier = Modifier.testTag("confirm_edit_floor_title_button")
+            ) {
+                Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена", color = Color(0xFF94A3B8))
+            }
+        }
+    )
+}
+
+@Composable
+fun EditTopicDialog(
+    currentTitle: String,
+    currentWeight: Long,
+    onDismiss: () -> Unit,
+    onConfirm: (newTitle: String, newWeight: Long) -> Unit
+) {
+    var title by remember(currentTitle) { mutableStateOf(currentTitle) }
+    var selectedWeight by remember(currentWeight) { mutableLongStateOf(currentWeight) }
+    var customWeightText by remember(currentWeight) { mutableStateOf(currentWeight.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A2232),
+        titleContentColor = Color.White,
+        textContentColor = Color(0xFFE2E8F0),
+        title = {
+            Text(
+                text = "Редактировать цель / задачу",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Название цели / задачи") },
+                    singleLine = true,
+                    colors = dialogTextFieldColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_topic_title_input")
+                )
+
+                Text(
+                    text = "Вес сложности [Вес: X]:",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFCBD5E1)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    for (preset in listOf(1L, 2L, 3L, 5L, 8L, 12L)) {
+                        val isSelected = selectedWeight == preset
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) Color(0xFF2997FF) else Color(0xFF273248),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    selectedWeight = preset
+                                    customWeightText = preset.toString()
+                                }
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "$preset",
+                                    color = Color.White,
+                                    fontFamily = JetBrainsMonoFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = customWeightText,
+                    onValueChange = {
+                        customWeightText = it
+                        it.toLongOrNull()?.let { v -> selectedWeight = v.coerceIn(1L, 10000L) }
+                    },
+                    label = { Text("Точный вес (1 – 10000)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = dialogTextFieldColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_topic_weight_input")
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val w = customWeightText.toLongOrNull()?.coerceIn(1L, 10000L) ?: selectedWeight
+                    if (title.isNotBlank()) {
+                        onConfirm(title.trim(), w)
+                    }
+                },
+                enabled = title.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2997FF)),
+                modifier = Modifier.testTag("confirm_edit_topic_button")
+            ) {
+                Text("Сохранить", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Отмена", color = Color(0xFF94A3B8))
+            }
+        }
+    )
+}
+
+@Composable
+fun BackupRestoreDialog(
+    onSaveBackupToFile: () -> Unit,
+    onLoadBackupFromFile: (replaceExisting: Boolean) -> Unit,
+    onGenerateBackupText: ((String) -> Unit) -> Unit,
+    onImportFromRawText: (rawJson: String, replaceExisting: Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var replaceExisting by remember { mutableStateOf(true) }
+    var showRawJsonSection by remember { mutableStateOf(false) }
+    var rawJsonText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF161E2E),
+        titleContentColor = Color.White,
+        textContentColor = Color(0xFFE2E8F0),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Backup,
+                    contentDescription = null,
+                    tint = Color(0xFF38BDF8),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Резервная копия данных",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = "Pyraminds • Пирамиды личностного роста",
+                        color = Color(0xFF93C5FD),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 460.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF1F2A3E),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                ) {
+                    Text(
+                        text = "Формат резервной копии универсален и обратно совместим между версиями приложения: сохранённый файл (.json) содержит все ваши бесконечные поля, пирамиды, этажи и прогресс задач.",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+
+                // 1. Export to .json file button
+                Button(
+                    onClick = onSaveBackupToFile,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("export_backup_file_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Сохранить резервную копию в файл (.json)",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
+
+                // Import mode selector
+                Text(
+                    text = "Режим восстановления при загрузке:",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (replaceExisting) Color(0xFF233858) else Color(0xFF1E2636),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(
+                                width = if (replaceExisting) 1.6.dp else 1.dp,
+                                color = if (replaceExisting) Color(0xFF38BDF8) else Color.White.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { replaceExisting = true }
+                            .padding(vertical = 8.dp, horizontal = 8.dp)
+                    ) {
+                        Text(
+                            text = "Заменить текущие",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (!replaceExisting) Color(0xFF233858) else Color(0xFF1E2636),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(
+                                width = if (!replaceExisting) 1.6.dp else 1.dp,
+                                color = if (!replaceExisting) Color(0xFF38BDF8) else Color.White.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .clickable { replaceExisting = false }
+                            .padding(vertical = 8.dp, horizontal = 8.dp)
+                    ) {
+                        Text(
+                            text = "Объединить (добавить)",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // 2. Import from .json file button
+                OutlinedButton(
+                    onClick = { onLoadBackupFromFile(replaceExisting) },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("import_backup_file_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.UploadFile,
+                        contentDescription = null,
+                        tint = Color(0xFF38BDF8),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Загрузить резервную копию из файла",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
+
+                // Optional text fallback (copy/paste JSON directly)
+                TextButton(
+                    onClick = {
+                        showRawJsonSection = !showRawJsonSection
+                        if (showRawJsonSection && rawJsonText.isBlank()) {
+                            onGenerateBackupText { generated ->
+                                rawJsonText = generated
+                            }
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = if (showRawJsonSection) {
+                            "Скрыть текстовый JSON-код копии"
+                        } else {
+                            "Показать / вставить JSON-текст вручную"
+                        },
+                        color = Color(0xFF93C5FD),
+                        fontSize = 12.sp
+                    )
+                }
+
+                if (showRawJsonSection) {
+                    OutlinedTextField(
+                        value = rawJsonText,
+                        onValueChange = { rawJsonText = it },
+                        label = { Text("JSON-данные резервной копии") },
+                        colors = dialogTextFieldColors(),
+                        maxLines = 6,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("raw_backup_json_input")
+                    )
+                    Button(
+                        onClick = {
+                            if (rawJsonText.isNotBlank()) {
+                                onImportFromRawText(rawJsonText, replaceExisting)
+                            }
+                        },
+                        enabled = rawJsonText.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2ECC71)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("restore_from_raw_json_button")
+                    ) {
+                        Text(
+                            text = "Восстановить из вставленного JSON",
+                            color = Color(0xFF062814),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Закрыть", color = Color(0xFF93C5FD), fontWeight = FontWeight.Bold)
             }
         }
     )

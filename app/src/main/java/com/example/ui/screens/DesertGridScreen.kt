@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.OpenWith
 import androidx.compose.material.icons.filled.Remove
@@ -127,6 +128,7 @@ fun DesertGridScreen(
     onSelectBoard: (String) -> Unit,
     onOpenBoardSettings: (FieldBoard) -> Unit,
     onOpenCreateBoard: () -> Unit,
+    onOpenBackupDialog: () -> Unit,
     onSelectPyramid: (String) -> Unit,
     onToggleMoveMode: () -> Unit,
     onMovePyramid: (pyramidId: String, targetGridX: Float, targetGridY: Float) -> Unit,
@@ -308,17 +310,17 @@ fun DesertGridScreen(
                     }
                 }
         ) {
-            // 1. Biome Terrain Background (Desert, Snow, Grass, or Underwater)
-            drawFieldBiomeTerrain(biome, originX, originY, zoom)
+            // 1. Detailed Biome Terrain Background (Desert, Snow, Grass, or Underwater)
+            drawFieldBiomeTerrain(biome, originX, originY, zoom, tileW, tileH)
 
-            // 2. Isometric Square Grid Projected Over the Terrain
+            // 2. Detailed Isometric Square Grid & Sub-Grid Projected Over the Terrain
             drawIsometricGrid(
                 biome = biome,
                 originX = originX,
                 originY = originY,
                 tileW = tileW,
                 tileH = tileH,
-                gridRadius = 10
+                gridRadius = 12
             )
 
             // 3. In Move Mode, highlight grid cells and the live target position under dragged pyramid
@@ -458,60 +460,133 @@ fun DesertGridScreen(
         }
 
         // HUD Layer:
-        // - Move, Create Pyramid, and Zoom buttons are placed ABOVE the Field Switcher buttons!
-        // - Field Switcher buttons are placed at the bottom of the screen!
+        // - Top-left: Backup button + In-app title "Пирамиды личностного роста"
+        // - Bottom: Move, Create Pyramid, and Zoom buttons ABOVE the Field Switcher buttons
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
-            // Subtle empty-state or move-mode banner at top
-            if (isMoveMode) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color(0xEE10233A),
-                    shadowElevation = 8.dp,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.65f), RoundedCornerShape(50))
-                        .testTag("move_mode_drag_hint")
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    // Top-Left Backup Button
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xE6182232),
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                            .clickable { onOpenBackupDialog() }
+                            .testTag("open_backup_dialog_button")
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.OpenWith,
-                            contentDescription = null,
-                            tint = Color(0xFF38BDF8),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Зажмите пирамиду и перетащите её в любое место поля",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Backup,
+                                contentDescription = "Резервная копия",
+                                tint = Color(0xFF38BDF8),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Резервная копия",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // In-App Title Badge ("Пирамиды личностного роста")
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xCC151D2A),
+                        shadowElevation = 4.dp,
+                        modifier = Modifier
+                            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(12.dp))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = "Пирамиды личностного роста",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                lineHeight = 13.sp
+                            )
+                            Text(
+                                text = "Pyraminds • ${activeBoard.title}",
+                                color = Color(0xFF93C5FD),
+                                fontSize = 9.sp,
+                                lineHeight = 11.sp
+                            )
+                        }
                     }
                 }
-            } else if (pyramids.isEmpty()) {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xD9172030),
-                    shadowElevation = 6.dp,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
-                ) {
-                    Text(
-                        text = "Поле «${activeBoard.title}» пока пусто. Нажмите «+ Создать пирамиду» ниже, чтобы заложить первую цель.",
-                        color = Color(0xFFE2E8F0),
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                    )
+
+                // Subtle empty-state or move-mode banner below top bar
+                if (isMoveMode) {
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color(0xEE10233A),
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.65f), RoundedCornerShape(50))
+                            .testTag("move_mode_drag_hint")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.OpenWith,
+                                contentDescription = null,
+                                tint = Color(0xFF38BDF8),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Зажмите пирамиду и перетащите её в любое место поля",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                } else if (pyramids.isEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color(0xD9172030),
+                        shadowElevation = 6.dp,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(14.dp))
+                    ) {
+                        Text(
+                            text = "Поле «${activeBoard.title}» пока пусто. Нажмите «+ Создать пирамиду» ниже, чтобы заложить первую цель.",
+                            color = Color(0xFFE2E8F0),
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
                 }
             }
 
@@ -817,7 +892,9 @@ private fun DrawScope.drawFieldBiomeTerrain(
     biome: FieldBiome,
     originX: Float,
     originY: Float,
-    zoom: Float
+    zoom: Float,
+    tileW: Float,
+    tileH: Float
 ) {
     val w = size.width
     val h = size.height
@@ -825,43 +902,47 @@ private fun DrawScope.drawFieldBiomeTerrain(
     val (bgGradient, ridgeTopColor, ridgeMidColor) = when (biome) {
         FieldBiome.DESERT -> Triple(
             listOf(
-                Color(0xFFF6CE9B),
-                Color(0xFFE7AD6B),
-                Color(0xFFD5934E),
-                Color(0xFFECB87C)
+                Color(0xFFF9D9AD),
+                Color(0xFFECB272),
+                Color(0xFFD8944D),
+                Color(0xFFE5A967),
+                Color(0xFFCA823A)
             ),
-            Color(0x55B97432),
-            Color(0x289B5B1E)
+            Color(0x66B46B27),
+            Color(0x338D4E16)
         )
         FieldBiome.SNOW -> Triple(
             listOf(
                 Color(0xFFF8FAFC),
                 Color(0xFFE2E8F0),
                 Color(0xFFBFDBFE),
-                Color(0xFFEFF6FF)
+                Color(0xFFDBEAFE),
+                Color(0xFF93C5FD)
             ),
-            Color(0x5560A5FA),
-            Color(0x243B82F6)
+            Color(0x5860A5FA),
+            Color(0x283B82F6)
         )
         FieldBiome.GRASS -> Triple(
             listOf(
-                Color(0xFFA7F3D0),
+                Color(0xFFBBF7D0),
                 Color(0xFF6EE7B7),
                 Color(0xFF34D399),
-                Color(0xFF4ADE80)
+                Color(0xFF22C55E),
+                Color(0xFF15803D)
             ),
-            Color(0x4D047857),
-            Color(0x24065F46)
+            Color(0x52047857),
+            Color(0x28065F46)
         )
         FieldBiome.UNDERWATER -> Triple(
             listOf(
-                Color(0xFF0C4A6E),
+                Color(0xFF0E5A8A),
                 Color(0xFF075985),
+                Color(0xFF0C4A6E),
                 Color(0xFF082F49),
-                Color(0xFF0F172A)
+                Color(0xFF061E33)
             ),
             Color(0x550284C7),
-            Color(0x2E0369A1)
+            Color(0x300369A1)
         )
     }
 
@@ -873,29 +954,39 @@ private fun DrawScope.drawFieldBiomeTerrain(
         )
     )
 
-    val shiftX = (originX - w * 0.5f) * 0.35f
-    val shiftY = (originY - h * 0.5f) * 0.35f
+    val shiftX = (originX - w * 0.5f) * 0.45f
+    val shiftY = (originY - h * 0.5f) * 0.45f
 
-    for (i in -1..5) {
-        val bandY = h * (i * 0.22f) + (shiftY % (h * 0.22f))
+    // 1. Primary Sweeping Terrain Dunes / Ridges with Sunlit Crest Highlights
+    val crestHighlightColor = when (biome) {
+        FieldBiome.DESERT -> Color(0x66FFF3D1)
+        FieldBiome.SNOW -> Color(0x99FFFFFF)
+        FieldBiome.GRASS -> Color(0x55D9F99D)
+        FieldBiome.UNDERWATER -> Color(0x447DD3FC)
+    }
+
+    for (i in -2..7) {
+        val spacing = h * 0.17f
+        val bandY = i * spacing + (shiftY % spacing)
+        val wavePhase = (i * 97f)
         val duneCrest = Path().apply {
-            moveTo(-w * 0.2f, bandY)
+            moveTo(-w * 0.25f, bandY)
             cubicTo(
-                w * 0.25f + shiftX * 0.2f,
-                bandY - 65f * zoom,
-                w * 0.65f - shiftX * 0.2f,
-                bandY + 55f * zoom,
-                w * 1.2f,
-                bandY - 25f * zoom
+                w * 0.22f + (shiftX + wavePhase) * 0.18f,
+                bandY - 68f * zoom,
+                w * 0.68f - (shiftX - wavePhase) * 0.18f,
+                bandY + 58f * zoom,
+                w * 1.25f,
+                bandY - 28f * zoom
             )
-            lineTo(w * 1.2f, bandY + 130f * zoom)
+            lineTo(w * 1.25f, bandY + 135f * zoom)
             cubicTo(
-                w * 0.65f,
-                bandY + 185f * zoom,
-                w * 0.25f,
-                bandY + 75f * zoom,
-                -w * 0.2f,
-                bandY + 120f * zoom
+                w * 0.68f,
+                bandY + 190f * zoom,
+                w * 0.22f,
+                bandY + 80f * zoom,
+                -w * 0.25f,
+                bandY + 125f * zoom
             )
             close()
         }
@@ -907,31 +998,228 @@ private fun DrawScope.drawFieldBiomeTerrain(
                     ridgeMidColor,
                     Color.Transparent
                 ),
-                startY = bandY - 40f * zoom,
-                endY = bandY + 160f * zoom
+                startY = bandY - 45f * zoom,
+                endY = bandY + 165f * zoom
             )
+        )
+
+        // Crisp sunlit ridge line along the crest
+        val ridgeLine = Path().apply {
+            moveTo(-w * 0.25f, bandY)
+            cubicTo(
+                w * 0.22f + (shiftX + wavePhase) * 0.18f,
+                bandY - 68f * zoom,
+                w * 0.68f - (shiftX - wavePhase) * 0.18f,
+                bandY + 58f * zoom,
+                w * 1.25f,
+                bandY - 28f * zoom
+            )
+        }
+        drawPath(
+            path = ridgeLine,
+            color = crestHighlightColor,
+            style = Stroke(width = (2.0f * zoom).coerceIn(1.2f, 3.2f))
         )
     }
 
-    if (biome == FieldBiome.SNOW) {
-        for (k in 0..28) {
-            val fx = ((k * 137f + shiftX * 1.2f) % w + w) % w
-            val fy = ((k * 89f + shiftY * 1.2f) % h + h) % h
-            drawCircle(
-                color = Color.White.copy(alpha = 0.75f),
-                radius = (2.2f + (k % 3) * 1.3f) * zoom.coerceIn(0.8f, 1.3f),
-                center = Offset(fx, fy)
+    // 2. Fine Wind-Swept Micro-Ripples & Contour Lines Across the Field
+    val rippleColor = when (biome) {
+        FieldBiome.DESERT -> Color(0x2E7C4312)
+        FieldBiome.SNOW -> Color(0x3360A5FA)
+        FieldBiome.GRASS -> Color(0x28065F46)
+        FieldBiome.UNDERWATER -> Color(0x2E38BDF8)
+    }
+    for (r in -4..14) {
+        val ry = r * (h * 0.085f) + (shiftY % (h * 0.085f))
+        val ripplePath = Path().apply {
+            moveTo(-w * 0.1f, ry)
+            quadraticTo(
+                w * 0.3f + (shiftX % 120f),
+                ry - 18f * zoom,
+                w * 0.65f,
+                ry + 6f * zoom
+            )
+            quadraticTo(
+                w * 0.9f,
+                ry + 22f * zoom,
+                w * 1.15f,
+                ry - 8f * zoom
             )
         }
-    } else if (biome == FieldBiome.GRASS) {
-        for (k in 0..22) {
-            val fx = ((k * 163f + shiftX) % w + w) % w
-            val fy = ((k * 107f + shiftY) % h + h) % h
-            drawCircle(
-                color = Color(0xFFFEF08A).copy(alpha = 0.45f),
-                radius = (2.5f + (k % 2) * 1.5f) * zoom.coerceIn(0.8f, 1.3f),
-                center = Offset(fx, fy)
-            )
+        drawPath(
+            path = ripplePath,
+            color = rippleColor,
+            style = Stroke(width = 1.1f * zoom.coerceIn(0.7f, 1.4f))
+        )
+    }
+
+    // 3. World-Anchored Environmental Props (Rocks, Tufts, Ice Crystals, Corals)
+    val halfW = tileW * 0.5f
+    val halfH = tileH * 0.5f
+    fun propScreenPos(gx: Float, gy: Float): Offset {
+        return Offset(
+            x = originX + (gx - gy) * halfW,
+            y = originY + (gx + gy) * halfH
+        )
+    }
+
+    val propCoords = listOf(
+        -5.4f to -3.2f, -3.7f to -5.3f, -2.3f to -3.6f, 1.6f to -4.4f, 4.3f to -3.3f,
+        -5.2f to 1.4f, -3.4f to 2.6f, -1.6f to -2.4f, 2.6f to -1.7f, 4.6f to 1.3f,
+        -4.3f to 4.4f, -1.4f to 3.6f, 2.4f to 3.3f, 3.7f to 4.5f, -2.7f to 0.6f,
+        0.6f to -3.4f, 3.4f to -0.6f, -0.6f to 4.4f, 5.3f to -1.6f, -5.6f to -1.3f
+    )
+
+    for ((idx, coord) in propCoords.withIndex()) {
+        val pt = propScreenPos(coord.first, coord.second)
+        if (pt.x < -80f || pt.x > w + 80f || pt.y < -80f || pt.y > h + 80f) continue
+        val scale = (0.75f + (idx % 3) * 0.22f) * zoom.coerceIn(0.65f, 1.6f)
+
+        when (biome) {
+            FieldBiome.DESERT -> {
+                // Sandstone rock cluster + shadow + desert shrub
+                val rockW = 16f * scale
+                val rockH = 10f * scale
+                drawOval(
+                    color = Color(0x384A280B),
+                    topLeft = Offset(pt.x - rockW * 0.8f, pt.y - rockH * 0.2f),
+                    size = androidx.compose.ui.geometry.Size(rockW * 1.7f, rockH * 0.9f)
+                )
+                val rockPath = Path().apply {
+                    moveTo(pt.x - rockW * 0.6f, pt.y + rockH * 0.2f)
+                    lineTo(pt.x - rockW * 0.35f, pt.y - rockH * 0.7f)
+                    lineTo(pt.x + rockW * 0.25f, pt.y - rockH * 0.55f)
+                    lineTo(pt.x + rockW * 0.65f, pt.y + rockH * 0.2f)
+                    close()
+                }
+                drawPath(rockPath, color = Color(0xFFB87032))
+                val rockHighlight = Path().apply {
+                    moveTo(pt.x - rockW * 0.6f, pt.y + rockH * 0.2f)
+                    lineTo(pt.x - rockW * 0.35f, pt.y - rockH * 0.7f)
+                    lineTo(pt.x, pt.y + rockH * 0.2f)
+                    close()
+                }
+                drawPath(rockHighlight, color = Color(0xFFD99552))
+                if (idx % 2 == 0) {
+                    drawCircle(
+                        color = Color(0xFF6B8E23).copy(alpha = 0.7f),
+                        radius = 3.5f * scale,
+                        center = Offset(pt.x + rockW * 0.85f, pt.y + 2f * scale)
+                    )
+                }
+            }
+
+            FieldBiome.SNOW -> {
+                // Frosted ice crystal spire / snow pine silhouette
+                val spireH = 18f * scale
+                val spireW = 8f * scale
+                val crystal = Path().apply {
+                    moveTo(pt.x, pt.y - spireH)
+                    lineTo(pt.x + spireW, pt.y)
+                    lineTo(pt.x, pt.y + spireW * 0.45f)
+                    lineTo(pt.x - spireW, pt.y)
+                    close()
+                }
+                drawPath(crystal, color = Color(0xAA93C5FD))
+                drawPath(
+                    crystal,
+                    color = Color.White.copy(alpha = 0.85f),
+                    style = Stroke(width = 1.2f * scale)
+                )
+            }
+
+            FieldBiome.GRASS -> {
+                // Grass blade tuft + wildflower blossom
+                for (b in -1..1) {
+                    drawLine(
+                        color = Color(0xFF047857).copy(alpha = 0.75f),
+                        start = Offset(pt.x + b * 3f * scale, pt.y + 2f * scale),
+                        end = Offset(pt.x + b * 6f * scale, pt.y - (8f + (b + 1) * 2f) * scale),
+                        strokeWidth = 1.8f * scale
+                    )
+                }
+                val flowerColor = when (idx % 3) {
+                    0 -> Color(0xFFFEF08A)
+                    1 -> Color(0xFFFBCFE8)
+                    else -> Color(0xFFE0F2FE)
+                }
+                drawCircle(
+                    color = flowerColor,
+                    radius = 3.2f * scale,
+                    center = Offset(pt.x, pt.y - 9f * scale)
+                )
+            }
+
+            FieldBiome.UNDERWATER -> {
+                // Swaying seabed kelp frond + coral node
+                val frondPath = Path().apply {
+                    moveTo(pt.x, pt.y + 4f * scale)
+                    quadraticTo(
+                        pt.x - 7f * scale,
+                        pt.y - 7f * scale,
+                        pt.x + 3f * scale,
+                        pt.y - 16f * scale
+                    )
+                }
+                drawPath(
+                    path = frondPath,
+                    color = Color(0xAA0D9488),
+                    style = Stroke(width = 2.6f * scale)
+                )
+                drawCircle(
+                    color = if (idx % 2 == 0) Color(0xAAFB7185) else Color(0xAA38BDF8),
+                    radius = 4.2f * scale,
+                    center = Offset(pt.x + 6f * scale, pt.y + 1f * scale)
+                )
+            }
+        }
+    }
+
+    // 4. Ambient Atmospheric Particles
+    when (biome) {
+        FieldBiome.DESERT -> {
+            for (k in 0..34) {
+                val fx = ((k * 149f + shiftX * 1.1f) % w + w) % w
+                val fy = ((k * 97f + shiftY * 1.1f) % h + h) % h
+                drawCircle(
+                    color = Color(0xFFFFF7ED).copy(alpha = 0.42f),
+                    radius = (1.4f + (k % 3) * 0.9f) * zoom.coerceIn(0.8f, 1.3f),
+                    center = Offset(fx, fy)
+                )
+            }
+        }
+        FieldBiome.SNOW -> {
+            for (k in 0..42) {
+                val fx = ((k * 137f + shiftX * 1.25f) % w + w) % w
+                val fy = ((k * 89f + shiftY * 1.25f) % h + h) % h
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.80f),
+                    radius = (2.0f + (k % 3) * 1.3f) * zoom.coerceIn(0.8f, 1.3f),
+                    center = Offset(fx, fy)
+                )
+            }
+        }
+        FieldBiome.GRASS -> {
+            for (k in 0..32) {
+                val fx = ((k * 163f + shiftX) % w + w) % w
+                val fy = ((k * 107f + shiftY) % h + h) % h
+                drawCircle(
+                    color = Color(0xFFFEF08A).copy(alpha = 0.52f),
+                    radius = (2.2f + (k % 2) * 1.4f) * zoom.coerceIn(0.8f, 1.3f),
+                    center = Offset(fx, fy)
+                )
+            }
+        }
+        FieldBiome.UNDERWATER -> {
+            for (k in 0..36) {
+                val fx = ((k * 151f + shiftX * 0.9f) % w + w) % w
+                val fy = ((k * 113f + shiftY * 0.9f) % h + h) % h
+                drawCircle(
+                    color = Color(0xFF7DD3FC).copy(alpha = 0.35f),
+                    radius = (1.8f + (k % 3) * 1.1f) * zoom.coerceIn(0.8f, 1.3f),
+                    center = Offset(fx, fy)
+                )
+            }
         }
     }
 }
@@ -944,28 +1232,69 @@ private fun DrawScope.drawIsometricGrid(
     tileH: Float,
     gridRadius: Int
 ) {
-    val gridColor = when (biome) {
-        FieldBiome.DESERT -> Color(0xFF4A2E14).copy(alpha = 0.42f)
-        FieldBiome.SNOW -> Color(0xFF1E40AF).copy(alpha = 0.28f)
-        FieldBiome.GRASS -> Color(0xFF064E3B).copy(alpha = 0.32f)
-        FieldBiome.UNDERWATER -> Color(0xFF38BDF8).copy(alpha = 0.30f)
+    val majorGridColor = when (biome) {
+        FieldBiome.DESERT -> Color(0xFF4A2E14).copy(alpha = 0.46f)
+        FieldBiome.SNOW -> Color(0xFF1E3A8A).copy(alpha = 0.34f)
+        FieldBiome.GRASS -> Color(0xFF064E3B).copy(alpha = 0.38f)
+        FieldBiome.UNDERWATER -> Color(0xFF38BDF8).copy(alpha = 0.36f)
     }
+    val subGridColor = majorGridColor.copy(alpha = majorGridColor.alpha * 0.38f)
+    val nodeHighlightColor = when (biome) {
+        FieldBiome.DESERT -> Color(0xFFFFFBEB).copy(alpha = 0.55f)
+        FieldBiome.SNOW -> Color(0xFF2563EB).copy(alpha = 0.45f)
+        FieldBiome.GRASS -> Color(0xFFECFDF5).copy(alpha = 0.50f)
+        FieldBiome.UNDERWATER -> Color(0xFF7DD3FC).copy(alpha = 0.55f)
+    }
+
     val halfW = tileW * 0.5f
     val halfH = tileH * 0.5f
+    val r = gridRadius.toFloat()
 
+    // 1. Subtle Sub-Grid (0.5 tile subdivisions for fine architectural detail)
+    val subSteps = gridRadius * 2
+    for (s in -subSteps..subSteps) {
+        if (s % 2 == 0) continue
+        val fs = s * 0.5f
+
+        val sx1 = originX + (fs - (-r)) * halfW
+        val sy1 = originY + (fs + (-r)) * halfH
+        val ex1 = originX + (fs - r) * halfW
+        val ey1 = originY + (fs + r) * halfH
+        drawLine(
+            color = subGridColor,
+            start = Offset(sx1, sy1),
+            end = Offset(ex1, ey1),
+            strokeWidth = 0.8f
+        )
+
+        val sx2 = originX + (-r - fs) * halfW
+        val sy2 = originY + (-r + fs) * halfH
+        val ex2 = originX + (r - fs) * halfW
+        val ey2 = originY + (r + fs) * halfH
+        drawLine(
+            color = subGridColor,
+            start = Offset(sx2, sy2),
+            end = Offset(ex2, ey2),
+            strokeWidth = 0.8f
+        )
+    }
+
+    // 2. Primary Isometric Grid Lines
     for (i in -gridRadius..gridRadius) {
         val fi = i.toFloat()
-        val r = gridRadius.toFloat()
+        val isAxis = (i == 0)
+        val strokeW = if (isAxis) 2.2f else 1.4f
+        val lineColor = if (isAxis) majorGridColor.copy(alpha = (majorGridColor.alpha * 1.35f).coerceAtMost(0.85f)) else majorGridColor
 
         val startX1 = originX + (fi - (-r)) * halfW
         val startY1 = originY + (fi + (-r)) * halfH
         val endX1 = originX + (fi - r) * halfW
         val endY1 = originY + (fi + r) * halfH
         drawLine(
-            color = gridColor,
+            color = lineColor,
             start = Offset(startX1, startY1),
             end = Offset(endX1, endY1),
-            strokeWidth = 1.4f
+            strokeWidth = strokeW
         )
 
         val startX2 = originX + (-r - fi) * halfW
@@ -973,11 +1302,41 @@ private fun DrawScope.drawIsometricGrid(
         val endX2 = originX + (r - fi) * halfW
         val endY2 = originY + (r + fi) * halfH
         drawLine(
-            color = gridColor,
+            color = lineColor,
             start = Offset(startX2, startY2),
             end = Offset(endX2, endY2),
-            strokeWidth = 1.4f
+            strokeWidth = strokeW
         )
+    }
+
+    // 3. Isometric Intersection Diamond Nodes & Origin Compass Marker
+    val nodeRange = 6
+    for (gx in -nodeRange..nodeRange) {
+        for (gy in -nodeRange..nodeRange) {
+            val ix = originX + (gx - gy) * halfW
+            val iy = originY + (gx + gy) * halfH
+            if (ix < -20f || ix > size.width + 20f || iy < -20f || iy > size.height + 20f) continue
+
+            if (gx == 0 && gy == 0) {
+                val originRx = tileW * 0.10f
+                val originRy = tileH * 0.10f
+                val originDiamond = Path().apply {
+                    moveTo(ix, iy - originRy)
+                    lineTo(ix + originRx, iy)
+                    lineTo(ix, iy + originRy)
+                    lineTo(ix - originRx, iy)
+                    close()
+                }
+                drawPath(originDiamond, color = nodeHighlightColor)
+                drawPath(originDiamond, color = majorGridColor, style = Stroke(width = 1.6f))
+            } else {
+                drawCircle(
+                    color = nodeHighlightColor,
+                    radius = 2.2f,
+                    center = Offset(ix, iy)
+                )
+            }
+        }
     }
 }
 
